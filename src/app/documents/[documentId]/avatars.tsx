@@ -18,6 +18,7 @@ function AvatarStack(){
    const users = useOthers();
    const currentUser = useSelf()
 
+
    if(users.length === 0) return null;
 
    return (
