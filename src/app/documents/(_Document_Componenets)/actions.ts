@@ -1,33 +1,36 @@
-'use server'
+"use server";
 
-import {auth, clerkClient}  from '@clerk/nextjs/server'
-import { ConvexHttpClient } from 'convex/browser';
-import { Id } from '../../../../convex/_generated/dataModel';
-import { api } from '../../../../convex/_generated/api';
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { ConvexHttpClient } from "convex/browser";
+import { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+type CustomSessionClaims = {
+	o?: { id: string };
+};
 
-export async function getDocuments(ids: Id<"documents">[]){
-   return await convex.query(api.documents.getByIds, {ids});
-} 
+export async function getDocuments(ids: Id<"documents">[]) {
+	return await convex.query(api.documents.getByIds, { ids });
+}
 
+export async function getUsers() {
+	const { sessionClaims } = await auth();
+	const clerk = await clerkClient();
 
-export async function getUsers(){
-   const {sessionClaims} = await auth();
-   const clerk = await clerkClient();
+	const claims = sessionClaims as CustomSessionClaims;
+	const orgId = claims.o?.id ?? null;
+	const response = await clerk.users.getUserList({
+		organizationId: orgId ? [orgId] : undefined,
+	});
 
-   const orgId = (sessionClaims as any)?.o?.id ?? null;
-   const response = await clerk.users.getUserList({
-      organizationId: [orgId]
-   });
+	const users = response.data.map((user) => ({
+		id: user.id,
+		name: user.fullName ?? user.primaryEmailAddress?.emailAddress ?? "Anonymous",
+		avatar: user.imageUrl,
+		color: "",
+	}));
 
-   const users = response.data.map((user)=>({
-      id: user.id,
-      name: user.fullName ?? user.primaryEmailAddress?.emailAddress ?? "Anonymous",
-      avatar: user.imageUrl,
-      color: ""
-   }));
-
-   return users
+	return users;
 }
