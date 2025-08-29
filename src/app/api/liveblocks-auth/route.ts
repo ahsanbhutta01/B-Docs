@@ -27,10 +27,10 @@ export async function POST(req: Request) {
 		return new Response("Unauthorized", { status: 401 });
 	}
 
-	const orgId = (sessionClaims as any)?.o?.id ?? null;
+	const org_id = (sessionClaims as any)?.o?.id ?? null;
 	const isOwner = document.ownerId === user.id;
 	const isOrganizationMember = !!(
-		document.organizationId && document.organizationId === orgId 
+		document.organizationId && document.organizationId === org_id 
 	);
 
 	if (!isOwner && !isOrganizationMember) {
@@ -56,3 +56,5 @@ export async function POST(req: Request) {
 
 	return new Response(body, { status });
 }
+
+
